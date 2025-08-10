@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bloo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&display=swap');
+
+        :root {
+            --dark-bg: #101014;
+            --container-bg: rgba(26, 26, 29, 0.9);
+            --primary-red: #e74c3c;
+            --glow-red: rgba(231, 76, 60, 0.7);
+            --text-light: #f0f0f0;
+            --text-secondary: #a0a0a0;
+            --border-red: rgba(231, 76, 60, 0.4);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-bg);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(231, 76, 60, 0.1), transparent 40%),
+                radial-gradient(circle at 75% 75%, rgba(60, 100, 231, 0.1), transparent 40%);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .scanner-container {
+            background: var(--container-bg);
+            backdrop-filter: blur(10px);
+            padding: 25px 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-red);
+            width: 90%;
+            max-width: 380px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* --- Decorative Corner Brackets --- */
+        .scanner-container::before, .scanner-container::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: var(--primary-red);
+            border-style: solid;
+            z-index: 2;
+        }
+        .scanner-container::before {
+            top: 10px; left: 10px;
+            border-width: 2px 0 0 2px;
+        }
+        .scanner-container::after {
+            bottom: 10px; right: 10px;
+            border-width: 0 2px 2px 0;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: var(--primary-red);
+            text-shadow: 0 0 10px var(--glow-red);
+            cursor: pointer;
+            letter-spacing: 4px;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-red);
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            font-size: 16px;
+            text-align: center;
+            transition: box-shadow 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 15px var(--glow-red);
+        }
+        input[type="text"]::placeholder {
+            color: var(--text-secondary);
+        }
+
+        #fingerprint-scanner {
+            width: 130px;
+            height: 130px;
+            margin: 20px auto;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            position: relative;
+            border: 3px solid transparent; /* Border is now part of the pulse */
+            transition: transform 0.2s ease;
+            z-index: 1;
+        }
+        #fingerprint-scanner:active {
+            transform: scale(0.95);
+        }
+        
+        /* --- Animated rings around scanner --- */
+        .scanner-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            top: -3px; left: -3px;
+            border-radius: 50%;
+            border: 3px solid;
+            animation: rotate 4s linear infinite;
+        }
+        #ring-1 { border-color: var(--border-red); }
+        #ring-2 { border-color: var(--border-red); animation-direction: reverse; animation-duration: 6s; }
+
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .scan-line {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 5%;
+            width: 90%;
+            height: 3px;
+            border-radius: 3px;
+            background: var(--primary-red);
+            box-shadow: 0 0 15px var(--glow-red);
+            animation: scan 2.5s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+        
+        @keyframes pulse {
+            0% { border-color: var(--primary-red); box-shadow: 0 0 10px 0 var(--glow-red); }
+            50% { border-color: var(--text-light); box-shadow: 0 0 25px 10px var(--glow-red); }
+            100% { border-color: var(--primary-red); box-shadow: 0 0 10px 0 var(--glow-red); }
+        }
+
+        .blood-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: var(--primary-red);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--glow-red);
+            animation: flow 3s linear;
+            opacity: 0;
+            z-index: 0;
+        }
+
+        @keyframes flow {
+            0% { transform: translateY(80px); opacity: 1; }
+            100% { transform: translateY(220px); opacity: 0; }
+        }
+
+        /* --- Heart Animation --- */
+        .heart {
+            position: absolute;
+            bottom: -50px;
+            font-size: 24px;
+            color: var(--primary-red);
+            animation: floatHeart 5s ease-in-out;
+            opacity: 0;
+            text-shadow: 0 0 10px var(--glow-red);
+            z-index: 0;
+        }
+
+        @keyframes floatHeart {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-500px) scale(1.5) rotate(90deg);
+                opacity: 0;
+            }
+        }
+
+        #status {
+            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            height: 50px;
+            line-height: 25px;
+            color: var(--text-light);
+            font-weight: 400;
+            letter-spacing: 1px;
+            z-index: 1;
+        }
+
+        #result-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        #result {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 52px;
+            font-weight: 700;
+            margin-top: 10px;
+            color: var(--primary-red);
+            text-shadow: 0 0 25px var(--glow-red);
+        }
+
+        #timestamp {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        #disclaimer {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 25px;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanner-container">
+        <h1 id="title">Bloo</h1>
+        <div id="animation-container"></div>
+        <input type="text" id="nameInput" placeholder="[ Enter Full Name ]">
+        <div id="fingerprint-scanner">
+            <div id="ring-1" class="scanner-ring"></div>
+            <div id="ring-2" class="scanner-ring"></div>
+            <div class="scan-line"></div>
+        </div>
+        <div id="status">Place Finger To Begin Analysis</div>
+        <div id="result-container">
+            <div id="result"></div>
+            <div id="timestamp"></div>
+        </div>
+        <div id="disclaimer">Made with <span style="color: var(--primary-red);">♥</span> for Jaanu</div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const scanner = document.getElementById('fingerprint-scanner');
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+        const nameInput = document.getElementById('nameInput');
+        const scanLine = document.querySelector('.scan-line');
+        const resultContainer = document.getElementById('result-container');
+        const timestampDiv = document.getElementById('timestamp');
+        const animationContainer = document.getElementById('animation-container');
+        const title = document.getElementById('title');
+        const mainContainer = document.querySelector('.scanner-container');
+
+        // --- Set Fingerprint Image ---
+        scanner.style.backgroundImage = "url('finger.jpg')";
+
+        let isScanning = false;
+
+        // --- Main Scan Function ---
+        scanner.addEventListener('click', () => {
+            if (isScanning || nameInput.value.trim() === '') {
+                if(!isScanning) statusDiv.textContent = 'NAME REQUIRED FOR ANALYSIS';
+                return;
+            }
+            isScanning = true;
+            
+            resultContainer.style.opacity = '0';
+            resultContainer.style.transform = 'translateY(20px)';
+            
+            scanner.style.animation = 'pulse 1.5s infinite';
+            scanLine.style.display = 'block';
+            startBloodFlowAnimation();
+            
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100, 50, 200]);
+            }
+
+            const displayName = nameInput.value.trim().split(' ')[0].toUpperCase();
+            statusDiv.innerHTML = `CONNECTING: ${displayName}...<br>AUTHENTICATING BIOMETRICS...`;
+
+            setTimeout(() => {
+                statusDiv.innerHTML = 'ANALYZING DNA SEQUENCE...<br>DETECTING SURFACE ANTIGENS...';
+            }, 2500);
+
+            setTimeout(() => {
+                statusDiv.innerHTML = 'CROSS-REFERENCING DATABASE...<br>FINALIZING REPORT...';
+            }, 5000);
+            
+            setTimeout(() => {
+                stopAnimations();
+                statusDiv.textContent = 'ANALYSIS COMPLETE';
+                showResult();
+                isScanning = false;
+            }, 7500);
+        });
+
+        // --- Animation Functions ---
+        function startBloodFlowAnimation() {
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'blood-particle';
+                    p.style.left = `${Math.random() * 100}%`;
+                    p.style.animationDelay = `${Math.random() * 2}s`;
+                    animationContainer.appendChild(p);
+                    setTimeout(() => p.remove(), 3000);
+                }, i * 100);
+            }
+        }
+
+        function stopAnimations() {
+            scanner.style.animation = 'none';
+            scanLine.style.display = 'none';
+        }
+
+        function triggerHeartAnimation() {
+            for (let i = 0; i < 25; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.innerHTML = '♥';
+                    heart.className = 'heart';
+                    heart.style.left = `${Math.random() * 100}%`;
+                    heart.style.animationDuration = `${(Math.random() * 2) + 3}s`;
+                    heart.style.fontSize = `${(Math.random() * 20) + 15}px`;
+                    
+                    mainContainer.appendChild(heart);
+                    
+                    setTimeout(() => {
+                        heart.remove();
+                    }, 5000);
+                }, Math.random() * 2000);
+            }
+        }
+
+        // --- Core Logic for Showing Result ---
+        function showResult() {
+            const fullName = nameInput.value.trim();
+            // Clean the name: lowercase and remove ALL spaces for flexible matching
+            const name = fullName.toLowerCase().replace(/\s+/g, '');
+            let bloodGroup = '';
+            let isSpecial = false;
+
+            // The order of these checks is important to avoid conflicts
+            if (name.includes('deepika')) {
+                bloodGroup = 'A+';
+                isSpecial = false; // No heart animation for Deepika
+            } else if (name.includes('joolichikki')) {
+                bloodGroup = 'Jaane Mann';
+                isSpecial = true;
+            } else if (name.includes('jaanemann')) {
+                bloodGroup = 'Joolichikki';
+                isSpecial = true;
+            } else if (name.includes('bobbylu')) { // Catches bobbylu, bobbyluu, bobbyluuuu
+                bloodGroup = 'Jaanu Maa';
+                isSpecial = true;
+            } else if (name.includes('jaanumaa')) {
+                bloodGroup = 'Bobby Luu';
+                isSpecial = true;
+            } else if (name.includes('bobby')) { // This must be checked AFTER 'bobbylu'
+                bloodGroup = 'Deepulu';
+                isSpecial = true;
+            } else if (name.includes('deepulu')) {
+                bloodGroup = 'Bobby';
+                isSpecial = true;
+            } else if (name.includes('chochi')) {
+                bloodGroup = 'Chochu';
+                isSpecial = true;
+            } else if (name.includes('chochu')) {
+                bloodGroup = 'Chochi';
+                isSpecial = true;
+            } else if (name.includes('meow')) {
+                bloodGroup = 'Minni';
+                isSpecial = true;
+            } else if (name.includes('minni')) {
+                bloodGroup = 'Meow';
+                isSpecial = true;
+            } else if (name.includes('tutti')) {
+                bloodGroup = 'Tuttu';
+                isSpecial = true;
+            } else if (name.includes('tuttu')) {
+                bloodGroup = 'Tutti';
+                isSpecial = true;
+            } else if (name === 'jo') { // Use exact match for 'jo' to avoid conflicts
+                bloodGroup = 'Shannu';
+                isSpecial = true;
+            } else if (name.includes('shannu')) {
+                bloodGroup = 'Jo';
+                isSpecial = true;
+            } else {
+                // Fallback to localStorage logic for all other names
+                const storedBloodGroup = localStorage.getItem(fullName);
+                if (storedBloodGroup) {
+                    bloodGroup = storedBloodGroup;
+                } else {
+                    const commonBloodGroups = ['O+', 'B+', 'A+', 'B+', 'O+', 'AB+', 'A+', 'B-'];
+                    const randomIndex = Math.floor(Math.random() * commonBloodGroups.length);
+                    bloodGroup = commonBloodGroups[randomIndex];
+                    localStorage.setItem(fullName, bloodGroup);
+                }
+            }
+            
+            if (isSpecial) {
+                triggerHeartAnimation();
+            }
+            
+            resultDiv.textContent = bloodGroup;
+            timestampDiv.textContent = `Analyzed On: ${getFormattedTimestamp()}`;
+            resultContainer.style.opacity = '1';
+            resultContainer.style.transform = 'translateY(0)';
+        }
+
+        function getFormattedTimestamp() {
+            const now = new Date();
+            return now.toLocaleString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }).replace(',', '');
+        }
+
+        let titleClicks = 0;
+        title.addEventListener('click', () => {
+            titleClicks++;
+            if (titleClicks >= 5) {
+                localStorage.clear();
+                title.style.transition = 'color 0.2s';
+                title.style.color = '#00ffcc';
+                statusDiv.textContent = 'SYSTEM MEMORY CLEARED';
+                setTimeout(() => {
+                    title.style.color = 'var(--primary-red)';
+                    statusDiv.textContent = 'Place Finger To Begin Analysis';
+                }, 1500);
+                titleClicks = 0;
+            }
+            setTimeout(() => { titleClicks = 0; }, 2000);
+        });
+    </script>
+
+</body>
+</html>
