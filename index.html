@@ -275,22 +275,23 @@
         scanner.style.backgroundImage = "url('finger.jpg')";
 
         let isScanning = false;
+        let scanTimers = []; // To hold our setTimeout IDs
 
         // --- Main Scan Function ---
-        scanner.addEventListener('click', () => {
+        function startScan() {
             if (isScanning || nameInput.value.trim() === '') {
-                if(!isScanning) statusDiv.textContent = 'NAME REQUIRED FOR ANALYSIS';
+                if (!isScanning) statusDiv.textContent = 'NAME REQUIRED FOR ANALYSIS';
                 return;
             }
             isScanning = true;
-            
+
             resultContainer.style.opacity = '0';
             resultContainer.style.transform = 'translateY(20px)';
-            
+
             scanner.style.animation = 'pulse 1.5s infinite';
             scanLine.style.display = 'block';
             startBloodFlowAnimation();
-            
+
             if (navigator.vibrate) {
                 navigator.vibrate([100, 50, 100, 50, 200]);
             }
@@ -298,26 +299,52 @@
             const displayName = nameInput.value.trim().split(' ')[0].toUpperCase();
             statusDiv.innerHTML = `CONNECTING: ${displayName}...<br>AUTHENTICATING BIOMETRICS...`;
 
-            setTimeout(() => {
+            // Store timer IDs so we can cancel them
+            scanTimers.push(setTimeout(() => {
                 statusDiv.innerHTML = 'ANALYZING DNA SEQUENCE...<br>DETECTING SURFACE ANTIGENS...';
-            }, 2500);
+            }, 2500));
 
-            setTimeout(() => {
+            scanTimers.push(setTimeout(() => {
                 statusDiv.innerHTML = 'CROSS-REFERENCING DATABASE...<br>FINALIZING REPORT...';
-            }, 5000);
-            
-            setTimeout(() => {
+            }, 5000));
+
+            scanTimers.push(setTimeout(() => {
                 stopAnimations();
                 statusDiv.textContent = 'ANALYSIS COMPLETE';
                 showResult();
                 isScanning = false;
-            }, 7500);
+            }, 7500));
+        }
+
+        function interruptScan() {
+            if (!isScanning) return; // Only interrupt if a scan is in progress
+            
+            // Clear all scheduled timers
+            scanTimers.forEach(timer => clearTimeout(timer));
+            scanTimers = [];
+
+            stopAnimations();
+            statusDiv.textContent = 'Analysis Interrupted. Hold finger steady.';
+            isScanning = false;
+        }
+
+        // --- Event Listeners for Touch and Mouse ---
+        scanner.addEventListener('mousedown', startScan);
+        scanner.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevents firing mouse events on touch devices
+            startScan();
         });
+
+        scanner.addEventListener('mouseup', interruptScan);
+        scanner.addEventListener('mouseleave', interruptScan); // Also interrupt if mouse leaves the element
+        scanner.addEventListener('touchend', interruptScan);
+
 
         // --- Animation Functions ---
         function startBloodFlowAnimation() {
             for (let i = 0; i < 15; i++) {
                 setTimeout(() => {
+                    if (!isScanning) return; // Don't create particles if scan was interrupted
                     const p = document.createElement('div');
                     p.className = 'blood-particle';
                     p.style.left = `${Math.random() * 100}%`;
@@ -355,28 +382,26 @@
         // --- Core Logic for Showing Result ---
         function showResult() {
             const fullName = nameInput.value.trim();
-            // Clean the name: lowercase and remove ALL spaces for flexible matching
             const name = fullName.toLowerCase().replace(/\s+/g, '');
             let bloodGroup = '';
             let isSpecial = false;
 
-            // The order of these checks is important to avoid conflicts
             if (name.includes('deepika')) {
                 bloodGroup = 'A+';
-                isSpecial = false; // No heart animation for Deepika
+                isSpecial = false;
             } else if (name.includes('joolichikki')) {
                 bloodGroup = 'Jaane Mann';
                 isSpecial = true;
             } else if (name.includes('jaanemann')) {
                 bloodGroup = 'Joolichikki';
                 isSpecial = true;
-            } else if (name.includes('bobbylu')) { // Catches bobbylu, bobbyluu, bobbyluuuu
+            } else if (name.includes('bobbylu')) {
                 bloodGroup = 'Jaanu Maa';
                 isSpecial = true;
             } else if (name.includes('jaanumaa')) {
                 bloodGroup = 'Bobby Luu';
                 isSpecial = true;
-            } else if (name.includes('bobby')) { // This must be checked AFTER 'bobbylu'
+            } else if (name.includes('bobby')) {
                 bloodGroup = 'Deepulu';
                 isSpecial = true;
             } else if (name.includes('deepulu')) {
@@ -400,14 +425,13 @@
             } else if (name.includes('tuttu')) {
                 bloodGroup = 'Tutti';
                 isSpecial = true;
-            } else if (name === 'jo') { // Use exact match for 'jo' to avoid conflicts
+            } else if (name === 'jo') {
                 bloodGroup = 'Shannu';
                 isSpecial = true;
             } else if (name.includes('shannu')) {
                 bloodGroup = 'Jo';
                 isSpecial = true;
             } else {
-                // Fallback to localStorage logic for all other names
                 const storedBloodGroup = localStorage.getItem(fullName);
                 if (storedBloodGroup) {
                     bloodGroup = storedBloodGroup;
